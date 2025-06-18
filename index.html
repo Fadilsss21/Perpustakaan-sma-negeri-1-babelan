@@ -47,11 +47,6 @@
     function saveBooks() {
       localStorage.setItem("books", JSON.stringify(books));
     }
-<!-- Tampilkan Buku PDF -->
-<h2>Baca Buku PDF</h2>
-<a href="laskar-pelangi.pdf" target="_blank">
-  <button class="btn">Baca Laskar Pelangi</button>
-</a>
     
     function displayBooks(filtered = books) {
       const container = document.getElementById("book-list");
