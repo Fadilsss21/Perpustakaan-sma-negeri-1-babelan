@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Perpustakaan</title>
+  <style>
+    body { font-family: sans-serif; padding: 20px; background: #f3f3f3; }
+    h1 { text-align: center; }
+    input, button, label { padding: 8px; margin: 5px 0; width: 100%; box-sizing: border-box; }
+    .form, .search { background: #fff; padding: 15px; border-radius: 8px; margin-bottom: 20px; }
+    .book { background: white; padding: 10px; margin: 10px 0; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+    .book h3 { margin: 0 0 5px; }
+    .book img { max-width: 100px; height: auto; display: block; margin-top: 5px; border-radius: 5px; }
+    .btn { padding: 5px 10px; border: none; border-radius: 5px; cursor: pointer; }
+    .edit-btn { background: #007bff; color: white; }
+    .delete-btn { background: red; color: white; margin-left: 5px; }
+  </style>
+</head>
+<body>
+
+  <h1>📚 Perpustakaan</h1>
+
+  <!-- Form Tambah / Edit Buku -->
+  <div class="form">
+    <h2 id="form-title">Tambah Buku</h2>
+    <input type="text" id="title" placeholder="Judul Buku" />
+    <input type="text" id="author" placeholder="Penulis" />
+    <input type="file" id="cover" accept="image/*" />
+    <button id="submit-btn" onclick="submitBook()">Tambah</button>
+    <button id="cancel-btn" onclick="cancelEdit()" style="display:none; background:gray; color:white;">Batal</button>
+  </div>
+
+  <!-- Pencarian Buku -->
+  <div class="search">
+    <h2>Cari Buku</h2>
+    <input type="text" id="search" placeholder="Cari judul..." oninput="searchBook()" />
+  </div>
+
+  <!-- Daftar Buku -->
+  <div id="book-list"></div>
+
+  <script>
+    let books = JSON.parse(localStorage.getItem("books")) || [];
+    let editIndex = null;
+
+    function saveBooks() {
+      localStorage.setItem("books", JSON.stringify(books));
+    }
+
+    function displayBooks(filtered = books) {
+      const container = document.getElementById("book-list");
+      container.innerHTML = "";
+
+      if (filtered.length === 0) {
+        container.innerHTML = "<p><i>Tidak ada buku ditemukan.</i></p>";
+        return;
+      }
+
+      filtered.forEach((book, i) => {
+        const div = document.createElement("div");
+        div.className = "book";
+        div.innerHTML = `
+          <h3>${book.title}</h3>
+          <p>Penulis: ${book.author}</p>
+          ${book.cover ? `<img src="${book.cover}" alt="Sampul">` : ""}
+          <button class="btn edit-btn" onclick="startEdit(${i})">Edit</button>
+          <button class="btn delete-btn" onclick="deleteBook(${i})">Hapus</button>`;
+        container.appendChild(div);
+      });
+    }
+
+    function submitBook() {
+      const title = document.getElementById("title").value.trim();
+      const author = document.getElementById("author").value.trim();
+      const fileInput = document.getElementById("cover");
+      const file = fileInput.files[0];
+
+      if (!title || !author) {
+        alert("Mohon isi semua kolom!");
+        return;
+      }
+
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          const cover = e.target.result;
+          simpanBuku({ title, author, cover });
+        };
+        reader.readAsDataURL(file);
+      } else {
+        simpanBuku({ title, author, cover: books[editIndex]?.cover || "" });
+      }
+    }
+
+    function simpanBuku(bukuBaru) {
+      if (editIndex === null) {
+        books.push(bukuBaru);
+      } else {
+        books[editIndex] = bukuBaru;
+        editIndex = null;
+        document.getElementById("form-title").innerText = "Tambah Buku";
+        document.getElementById("submit-btn").innerText = "Tambah";
+        document.getElementById("cancel-btn").style.display = "none";
+      }
+
+      document.getElementById("title").value = "";
+      document.getElementById("author").value = "";
+      document.getElementById("cover").value = "";
+      saveBooks();
+      displayBooks();
+    }
+
+    function startEdit(index) {
+      const book = books[index];
+      document.getElementById("title").value = book.title;
+      document.getElementById("author").value = book.author;
+      editIndex = index;
+      document.getElementById("form-title").innerText = "Edit Buku";
+      document.getElementById("submit-btn").innerText = "Update";
+      document.getElementById("cancel-btn").style.display = "inline-block";
+    }
+
+    function cancelEdit() {
+      editIndex = null;
+      document.getElementById("title").value = "";
+      document.getElementById("author").value = "";
+      document.getElementById("cover").value = "";
+      document.getElementById("form-title").innerText = "Tambah Buku";
+      document.getElementById("submit-btn").innerText = "Tambah";
+      document.getElementById("cancel-btn").style.display = "none";
+    }
+
+    function deleteBook(index) {
+      if (confirm("Yakin ingin menghapus buku ini?")) {
+        books.splice(index, 1);
+        saveBooks();
+        displayBooks();
+      }
+    }
+
+    function searchBook() {
+      const keyword = document.getElementById("search").value.toLowerCase();
+      const filtered = books.filter(book => book.title.toLowerCase().includes(keyword));
+      displayBooks(filtered);
+    }
+
+    displayBooks();
+  </script>
+
+</body>
+</html>
