@@ -39,7 +39,15 @@
 
   <!-- Daftar Buku -->
   <div id="book-list"></div>
-
+<!-- Tampilkan PDF Buku -->
+<h2>Baca Buku</h2>
+<div class="book">
+  <h3>Laskar Pelangi</h3>
+  <iframe src="laskar-pelangi.pdf" width="100%" height="600px" style="border: 1px solid #ccc;">
+    PDF tidak bisa ditampilkan. Silakan download: 
+    <a href="laskar-pelangi.pdf" target="_blank">Unduh Buku</a>
+  </iframe>
+</div>
   <script>
     let books = JSON.parse(localStorage.getItem("books")) || [];
     let editIndex = null;
