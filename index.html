@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Daftar Buku Perpustakaan SMA Negeri 1 Babelan</title>
+  <style>
+    body { font-family: sans-serif; padding: 20px; background: #add8e6; }
+    h1 { text-align: center; }
+    input, button, label { padding: 8px; margin: 5px 0; width: 100%; box-sizing: border-box; }
+    .form, .search { background: #fff; padding: 15px; border-radius: 8px; margin-bottom: 20px; }
+    .book { background: white; padding: 10px; margin: 10px 0; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+    .book h3 { margin: 0 0 5px; }
+    .book img { max-width: 100px; height: auto; display: block; margin-top: 5px; border-radius: 5px; }
+    .btn { padding: 5px 10px; border: none; border-radius: 5px; cursor: pointer; }
+    .edit-btn { background: #007bff; color: white; }
+    .delete-btn { background: red; color: white; margin-left: 5px; }
+  </style>
+
+  <!-- Firebase SDK (Compat) -->
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyA1_au77gcICcQl5lSoZUsPy8CJj0m7Z-U",
+      authDomain: "perpus-abdaa.firebaseapp.com",
+      projectId: "perpus-abdaa",
+      storageBucket: "perpus-abdaa.appspot.com",
+      messagingSenderId: "532846806580",
+      appId: "1:532846806580:web:bf36983cb4bc057546ec61",
+      measurementId: "G-6E70C28LVX"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+  </script>
+</head>
+<body>
+
+  <h1>📚 Daftar Buku di Perpustakaan SMA Negeri 1 Babelan 📚</h1>
+
+  <!-- Form Tambah Buku -->
+  <div class="form">
+    <h2 id="form-title">Tambah Buku</h2>
+    <input type="text" id="title" placeholder="Judul Buku" />
+    <input type="text" id="author" placeholder="Penulis" />
+    <input type="file" id="cover" accept="image/*" />
+    <button onclick="submitBook()">Tambah</button>
+  </div>
+
+  <!-- Pencarian -->
+  <div class="search">
+    <h2>Cari Buku</h2>
+    <input type="text" id="search" placeholder="Cari judul..." oninput="searchBook()" />
+  </div>
+
+  <!-- Daftar Buku -->
+  <div id="book-list"></div>
+
+  <script>
+    let allBooks = [];
+
+    function submitBook() {
+      const title = document.getElementById("title").value.trim();
+      const author = document.getElementById("author").value.trim();
+      const fileInput = document.getElementById("cover");
+      const file = fileInput.files[0];
+
+      if (!title || !author) {
+        alert("Harap isi semua kolom!");
+        return;
+      }
+
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          const cover = e.target.result;
+          simpanBuku({ title, author, cover, waktu: new Date() });
+        };
+        reader.readAsDataURL(file);
+      } else {
+        simpanBuku({ title, author, cover: "", waktu: new Date() });
+      }
+
+      document.getElementById("title").value = "";
+      document.getElementById("author").value = "";
+      document.getElementById("cover").value = "";
+    }
+
+    function simpanBuku(buku) {
+      db.collection("buku").add(buku)
+        .then(() => {
+          ambilBuku();
+        })
+        .catch(error => {
+          alert("Gagal menyimpan: " + error.message);
+        });
+    }
+
+    function ambilBuku() {
+      db.collection("buku").orderBy("waktu", "desc").get()
+        .then(snapshot => {
+          allBooks = [];
+          snapshot.forEach(doc => {
+            allBooks.push(doc.data());
+          });
+          tampilkanBuku(allBooks);
+        });
+    }
+
+    function tampilkanBuku(data) {
+      const container = document.getElementById("book-list");
+      container.innerHTML = "";
+
+      if (data.length === 0) {
+        container.innerHTML = "<p><i>Tidak ada buku ditemukan.</i></p>";
+        return;
+      }
+
+      data.forEach(book => {
+        const div = document.createElement("div");
+        div.className = "book";
+        div.innerHTML = `
+          <h3>${book.title}</h3>
+          <p>Penulis: ${book.author}</p>
+          ${book.cover ? `<img src="${book.cover}" alt="Sampul">` : ""}
+        `;
+        container.appendChild(div);
+      });
+    }
+
+    function searchBook() {
+      const keyword = document.getElementById("search").value.toLowerCase();
+      const filtered = allBooks.filter(book => book.title.toLowerCase().includes(keyword));
+      tampilkanBuku(filtered);
+    }
+
+    ambilBuku();
+  </script>
+
+</body>
+</html>
